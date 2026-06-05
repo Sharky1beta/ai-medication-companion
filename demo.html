@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华润三九 - AI用药伴侣</title>
+    <style>
+        :root {
+            --primary-color: #1976D2; 
+            --primary-light: #E3F2FD;
+            --bg-color: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --danger: #D32F2F;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            user-select: none;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #1976D2, #42A5F5);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+        .section {
+            padding: 15px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .btn-large {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #1976D2, #1E88E5);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(25, 118, 210, 0.25);
+            transition: transform 0.1s;
+        }
+        .btn-large:active {
+            transform: scale(0.96);
+        }
+        .btn-large-secondary {
+            background: var(--primary-light);
+            color: var(--primary-color);
+            box-shadow: none;
+            margin-top: 15px;
+        }
+        .pill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #EEEEEE;
+        }
+        .pill-item:last-child {
+            border-bottom: none;
+        }
+        .pill-info h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+        .pill-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+        .pill-status {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .status-taken {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+        .status-pending {
+            background-color: #FFF3E0;
+            color: #EF6C00;
+            box-shadow: 0 2px 8px rgba(239, 108, 0, 0.2);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .chat-btn {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 20px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            border-top: 1px solid #F0F0F0;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            z-index: 100;
+        }
+        .nav-item {
+            text-align: center;
+            color: #999999;
+            font-size: 14px;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-icon {
+            font-size: 24px;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 25px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .avatar {
+            width: 70px;
+            height: 70px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .list-item {
+            padding: 18px 0;
+            border-bottom: 1px solid #EEEEEE;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 问诊聊天悬浮窗 */
+        .chat-container {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .chat-panel {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            height: 85vh;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .chat-header {
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+        .close-chat {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #F5F7FA;
+        }
+        .msg {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .msg.ai { justify-content: flex-start; }
+        .msg.user { justify-content: flex-end; }
+        .bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg.ai .bubble {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .msg.user .bubble {
+            background: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            outline: none;
+        }
+        .send-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .quick-replies {
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .quick-btn {
+            background: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header" id="app-header">
+            首页
+        </div>
+
+        <!-- 首页 (Home) -->
+        <div id="page-home" class="page active">
+            <div class="section">
+                <!-- 我们加一个隐藏的 file input，真实调用摄像头/图库 -->
+                <input type="file" id="cameraInput" accept="image/*" style="display:none;" />
+                <button class="btn-large" onclick="document.getElementById('cameraInput').click()">
+                    📷 拍药盒/说明书<br>
+                    <span style="font-size: 16px; font-weight: normal; margin-top:5px; display:block;">豆包AI真实识别设提醒</span>
+                </button>
+            </div>
+
+            <div class="section">
+                <div class="card">
+                    <div class="card-title">💊 下次服药提醒</div>
+                    <div id="home-reminder-list">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">💬 用药问答</div>
+                    <button class="chat-btn" onclick="openChat()">
+                        🎤 问问豆包注意事项
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 药箱 (Pillbox) -->
+        <div id="page-pillbox" class="page">
+            <div class="section">
+                <div class="card">
+                    <div class="card-title">📅 今日计划</div>
+                    <div id="pillbox-today-list">
+                        <!-- 动态渲染 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📦 我的药品库</div>
+                    <div id="pillbox-inventory-list">
+                        <!-- 动态渲染 -->
+                    </div>
+                    <button class="btn-large btn-large-secondary" style="padding: 15px; font-size: 18px;" onclick="document.getElementById('cameraInput').click()">
+                        + 录入新药品
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的 (Profile) -->
+        <div id="page-profile" class="page">
+            <div class="section">
+                <div class="card">
+                    <div class="profile-header">
+                        <div class="avatar">👨‍🦳</div>
+                        <div>
+                            <h2 style="margin:0; font-size: 22px;">李大爷</h2>
+                            <p style="margin:5px 0 0 0; color:var(--text-secondary);">已连续规律服药 12 天</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="list-item" onclick="alert('进入家人共享设置，可绑定子女微信号')">
+                        <span>👨‍👩‍👧 亲属共享通知</span><span style="color:#CCC;">></span>
+                    </div>
+                    <div class="list-item" onclick="alert('进入服药历史统计图表')">
+                        <span>📈 服药历史打卡记录</span><span style="color:#CCC;">></span>
+                    </div>
+                    <div class="list-item" onclick="alert('一键拨打紧急联系人或社区医生')">
+                        <span style="color:var(--danger); font-weight: bold;">🆘 紧急呼叫</span><span style="color:#CCC;">></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <div class="nav-bar">
+            <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+                <div class="nav-icon">🏠</div>首页
+            </div>
+            <div class="nav-item" id="nav-pillbox" onclick="switchTab('pillbox')">
+                <div class="nav-icon">💊</div>药箱
+            </div>
+            <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+                <div class="nav-icon">👤</div>我的
+            </div>
+        </div>
+    </div>
+
+    <!-- 模拟上传分析弹窗 -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <h2>豆包AI正在看药盒...</h2>
+            <div class="loader"></div>
+            <p style="font-size: 18px; color: var(--text-secondary);">正在提取药品名称<br>和吃药时间</p>
+        </div>
+    </div>
+
+    <!-- 问诊聊天浮层 -->
+    <div class="chat-container" id="chatModal">
+        <div class="chat-panel">
+            <div class="chat-header">
+                豆包用药助手
+                <div class="close-chat" onclick="closeChat()">×</div>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="msg ai">
+                    <div class="bubble">爷爷您好！我是三九用药助手(豆包驱动)。请问您有什么用药疑问？可以直接打字或发语音。</div>
+                </div>
+            </div>
+            <div class="quick-replies">
+                <button class="quick-btn" onclick="sendMsg('阿托伐他汀能空腹吃吗？')">阿托伐他汀能空腹吃吗？</button>
+                <button class="quick-btn" onclick="sendMsg('感冒灵会有副作用吗？')">感冒灵会有副作用吗？</button>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="输入您的问题...">
+                <button class="send-btn" onclick="sendInput()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心数据层 (模拟数据库) ---
+        const db = {
+            inventory: {
+                '阿托伐他汀钙片': { remain: 20, unit: '片' },
+                '999感冒灵颗粒': { remain: 5, unit: '袋' }
+            },
+            todaySchedule: [
+                { id: 1, name: '999感冒灵颗粒', time: '08:00', dose: 1, unit: '袋', taken: true },
+                { id: 2, name: '阿托伐他汀钙片', time: '20:00', dose: 1, unit: '片', taken: false }
+            ]
+        };
+
+        // --- 渲染逻辑 ---
+        function renderAll() {
+            renderHome();
+            renderPillbox();
+        }
+
+        function renderHome() {
+            const container = document.getElementById('home-reminder-list');
+            let nextPill = db.todaySchedule.find(p => !p.taken);
+            
+            if (nextPill) {
+                container.innerHTML = `
+                    <div class="pill-item">
+                        <div class="pill-info">
+                            <h3 style="font-size: 20px;">${nextPill.name}</h3>
+                            <p style="color: var(--danger); font-size: 18px; font-weight:bold; margin-top:5px;">
+                                计划时间 ${nextPill.time} · 需服 ${nextPill.dose}${nextPill.unit}
+                            </p>
+                        </div>
+                        <div class="pill-status status-pending" onclick="takePill(${nextPill.id})">点击打卡</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `<div style="text-align:center; padding: 30px 10px; font-size: 18px; color: var(--text-secondary);">🎉 太棒了！您今天的药都已经按时吃完啦！</div>`;
+            }
+        }
+
+        function renderPillbox() {
+            const todayList = document.getElementById('pillbox-today-list');
+            todayList.innerHTML = db.todaySchedule.map(p => `
+                <div class="pill-item">
+                    <div class="pill-info" style="cursor:pointer;" onclick="editSchedule(${p.id})">
+                        <h3>${p.name} ✏️</h3>
+                        <p>${p.taken ? '✅ 已于今天服药' : '⏰ 计划时间'} ${p.time} · 每次${p.dose}${p.unit}</p>
+                    </div>
+                    ${p.taken 
+                        ? '<div class="pill-status status-taken">已服药</div>' 
+                        : `<div class="pill-status status-pending" style="animation:none;" onclick="takePill(${p.id})">去打卡</div>`
+                    }
+                </div>
+            `).join('');
+
+            const invList = document.getElementById('pillbox-inventory-list');
+            invList.innerHTML = Object.keys(db.inventory).map(key => {
+                let item = db.inventory[key];
+                let isLow = item.remain <= 5; 
+                let safeKey = key.replace(/'/g, "\\'");
+                return `
+                    <div class="list-item" style="cursor:pointer;" onclick="editInventory('${safeKey}')">
+                        <span style="font-weight: bold;">${key} ✏️</span>
+                        <span style="color: ${isLow ? 'var(--danger)' : 'var(--text-secondary)'}; font-size:16px;">
+                            ${isLow ? '⚠️ 库存告急：余' : '剩余：'} ${item.remain} ${item.unit}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function takePill(id) {
+            let pill = db.todaySchedule.find(p => p.id === id);
+            if (pill && !pill.taken) {
+                pill.taken = true;
+                if (db.inventory[pill.name]) {
+                    db.inventory[pill.name].remain -= pill.dose;
+                    if(db.inventory[pill.name].remain < 0) db.inventory[pill.name].remain = 0;
+                }
+                alert('叮！打卡成功。\n已扣减药箱中对应的库存数据。');
+                renderAll();
+            }
+        }
+
+        function editSchedule(id) {
+            let p = db.todaySchedule.find(x => x.id === id);
+            if(!p) return;
+            
+            let newTime = prompt("请修改计划服药时间 (例如 08:00):", p.time);
+            if(newTime !== null && newTime.trim() !== '') p.time = newTime;
+            
+            let newDose = prompt(`请修改每次服用的剂量 (当前为 ${p.dose}${p.unit}):`, p.dose);
+            if(newDose !== null && !isNaN(newDose)) p.dose = Number(newDose);
+            
+            renderAll();
+        }
+
+        function editInventory(oldName) {
+            let item = db.inventory[oldName];
+            if(!item) return;
+            
+            let newName = prompt("请修改药品名称:", oldName);
+            let finalName = oldName;
+            if(newName && newName.trim() !== '' && newName !== oldName) {
+                finalName = newName.trim();
+                db.inventory[finalName] = item;
+                delete db.inventory[oldName];
+                
+                // 同步修改 schedule 里的药名
+                db.todaySchedule.forEach(p => {
+                    if(p.name === oldName) p.name = finalName;
+                });
+            }
+            
+            let newRemain = prompt(`请修改该药品的剩余数量 (当前为 ${item.remain}${item.unit}):`, item.remain);
+            if(newRemain !== null && !isNaN(newRemain)) {
+                db.inventory[finalName].remain = Number(newRemain);
+            }
+            
+            renderAll();
+        }
+
+
+        // --- 接入真实的 豆包 AI ---
+        const API_URL = 'http://localhost:3000/api/ai';
+
+        // 处理文件上传事件
+        document.getElementById('cameraInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('uploadModal').style.display = 'flex';
+            
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64Image = event.target.result;
+                try {
+                    const resp = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: [
+                                {
+                                    role: "user",
+                                    content: [
+                                        { type: "image_url", image_url: { url: base64Image } },
+                                        { type: "text", text: "你是一个专业的药品识别助手。请识别图中的药品，提取名称和建议用法，请严格返回JSON格式：{\"name\": \"药名\", \"dose\": 1, \"unit\": \"单位(片/袋)\", \"time\": \"建议服药时间，如 12:30\"}。如果不是药品，返回 {\"error\": \"无法识别\"}" }
+                                    ]
+                                }
+                            ]
+                        })
+                    });
+                    
+                    if(!resp.ok) throw new Error("网络错误");
+                    
+                    const data = await resp.json();
+                    let resultStr = data.choices[0].message.content;
+                    
+                    // 清理可能包含的 Markdown 标记
+                    resultStr = resultStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+                    const result = JSON.parse(resultStr);
+                    
+                    if(result.error) {
+                        alert("AI未能识别出药品，请重新对准药品拍摄。");
+                    } else {
+                        // 插入数据库
+                        if(!db.inventory[result.name]) {
+                            db.inventory[result.name] = { remain: 20, unit: result.unit || '片' };
+                        }
+                        db.todaySchedule.push({
+                            id: Date.now(),
+                            name: result.name,
+                            time: result.time || '12:00',
+                            dose: result.dose || 1,
+                            unit: result.unit || '片',
+                            taken: false
+                        });
+                        db.todaySchedule.sort((a,b) => a.time.localeCompare(b.time));
+                        
+                        alert(`豆包识别成功！\n\n药品：${result.name}\n用法用量：每次${result.dose}${result.unit}\n\n已自动为您存入电子药箱并设置提醒！`);
+                        renderAll();
+                        switchTab('home');
+                    }
+                } catch(error) {
+                    alert("AI调用失败，请检查服务或网络配置。\n" + error.message);
+                } finally {
+                    document.getElementById('uploadModal').style.display = 'none';
+                    e.target.value = ''; // 清空选择
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // --- 聊天交互 ---
+        function openChat() { document.getElementById('chatModal').style.display = 'flex'; }
+        function closeChat() { document.getElementById('chatModal').style.display = 'none'; }
+        function sendInput() {
+            const input = document.getElementById('chatInput');
+            const txt = input.value.trim();
+            if(txt) sendMsg(txt);
+            input.value = '';
+        }
+        
+        async function sendMsg(txt) {
+            const body = document.getElementById('chatBody');
+            body.innerHTML += `<div class="msg user"><div class="bubble">${txt}</div></div>`;
+            body.scrollTop = body.scrollHeight;
+
+            const typingId = 'typing_' + Date.now();
+            body.innerHTML += `<div class="msg ai" id="${typingId}"><div class="bubble" style="color:#999;">豆包正在思考...</div></div>`;
+            body.scrollTop = body.scrollHeight;
+
+            try {
+                const resp = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: "system", content: "你是一个华润三九的AI用药伴侣，专门为55-75岁的老年人服务。称呼他们爷爷奶奶，回答要极其简短通俗。如果用户问具体药品的服用方法，一定要主动提醒该药物的常见副作用！使用纯文本，如果遇到危险情况要提醒就医。" },
+                            { role: "user", content: txt }
+                        ]
+                    })
+                });
+                
+                if(!resp.ok) throw new Error("网络错误");
+                const data = await resp.json();
+                const reply = data.choices[0].message.content;
+                
+                document.getElementById(typingId).remove();
+                body.innerHTML += `<div class="msg ai"><div class="bubble">${reply.replace(/\n/g, '<br>')}</div></div>`;
+                body.scrollTop = body.scrollHeight;
+                
+            } catch(e) {
+                document.getElementById(typingId).remove();
+                body.innerHTML += `<div class="msg ai"><div class="bubble" style="color:red;">哎呀，网络开小差了，请重试。</div></div>`;
+            }
+        }
+
+        // --- 导航逻辑 ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('page-' + tabName).classList.add('active');
+            document.getElementById('nav-' + tabName).classList.add('active');
+            const header = document.getElementById('app-header');
+            if(tabName === 'home') header.innerText = 'AI用药伴侣';
+            if(tabName === 'pillbox') header.innerText = '电子药箱';
+            if(tabName === 'profile') header.innerText = '个人中心';
+        }
+
+        // 初始化
+        renderAll();
+        switchTab('home');
+    </script>
+</body>
+</html>
